@@ -2,25 +2,31 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-    // "net/http/httputil"
-    // "reflect"
-    
-    "github.com/fatih/color"
+    "strconv"
+	// "net/http/httputil"
+	// "reflect"
+
+	"github.com/fatih/color"
 )
 
-const macmillanEndPoint = "https://dictionaryapi.com/api/v3/references/sd3/json/"
+const macmillanEndPoint = "https://dictionaryapi.com/api/v3/references/collegiate/json/"
 
 func main() {
-    // ("test", "collegiate", "6dfc3570-8a8b-4e4d-8734-aface0fbc277");
-    // ($word, $ref, $key) {
-    // $uri = "https://dictionaryapi.com/api/v1/references/" . urlencode($ref) . "/xml/" . urlencode($word) . "?key=" . urlencode($key);
-  
-    // resp, err := http.Get("http://localhost/ar-webservice/api/testapi.php")
-	resp, err := http.Get(macmillanEndPoint + "computer?key=76ffdfcb-e02b-4f16-83c7-8e388a38972d")
+	flag.Parse()
+
+	if flag.NArg() != 1 {
+		log.Fatal("No word to search (first arg is the word to search)")
+	}
+
+	word := flag.Arg(0)
+
+	// resp, err := http.Get("http://localhost/ar-webservice/api/testapi.php")
+	resp, err := http.Get(macmillanEndPoint + word + "?key=6dfc3570-8a8b-4e4d-8734-aface0fbc277")
 	// resp, err := http.Get("https://dictionaryapi.com/api/v3/references/collegiate/json/test?key=6dfc3570-8a8b-4e4d-8734-aface0fbc277")
 
 	if err != nil {
@@ -37,32 +43,32 @@ func main() {
 	var f interface{}
 	err = json.Unmarshal(bodyBytes, &f)
 
-    // macmillan api result format: https://dictionaryapi.com/products/api-collegiate-dictionary
-    // result is an array with different format in different element
-    a := f.([]interface{}) // https://tour.golang.org/methods/15
+	// macmillan api result format: https://dictionaryapi.com/products/api-collegiate-dictionary
+	// result is an array with different format in different element
+	a := f.([]interface{}) // https://tour.golang.org/methods/15
 
-    for i, v := range a {
-        if i == 0 {
-            // https://blog.golang.org/json-and-go
-            m := v.(map[string]interface{})
-            for k, v := range m {
-                switch vv := v.(type) { // interface type assertion, https://tour.golang.org/methods/15
-                // case string:
-                //     fmt.Println(k, "is string", vv)
-                case []interface{}: // an array type
-                    if k == "shortdef" {
-                        for _, def := range vv {
-                            color.Blue("Definition: ")
+	for i, v := range a {
+		if i == 0 {
+			// https://blog.golang.org/json-and-go
+			m := v.(map[string]interface{})
+			for k, v := range m {
+				switch vv := v.(type) { // interface type assertion, https://tour.golang.org/methods/15
+				// case string:
+				//     fmt.Println(k, "is string", vv)
+				case []interface{}: // an array type
+					if k == "shortdef" {
+						for n, def := range vv {
+							num := strconv.Itoa(n + 1)
+							color.Blue("Definition " + num + " : ")
 
-                            color.White(def.(string)) // https://stackoverflow.com/questions/14289256/cannot-convert-data-type-interface-to-type-string-need-type-assertion
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
+							color.White(def.(string) + "\n") // https://stackoverflow.com/questions/14289256/cannot-convert-data-type-interface-to-type-string-need-type-assertion
+						}
+						break
+					}
+				}
+			}
+		}
+	}
 
 	// dump, err := httputil.DumpResponse(resp, true)
 	// if err != nil {
