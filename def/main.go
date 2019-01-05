@@ -7,12 +7,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+    // "net/http/httputil"
 	"os/exec"
+    // "reflect"
 	"runtime"
 	"strconv"
 	"time"
-	// "net/http/httputil"
-	// "reflect"
 
 	"github.com/fatih/color"
 )
@@ -25,7 +25,8 @@ const (
 )
 
 var (
-	// mw (merriam-webster), google (googledictionaryapi)
+	// mw (merriam-webster) 
+    // google (googledictionaryapi) || https://googledictionaryapi.eu-gb.mybluemix.net/ || https://googledictionaryapi.eu-gb.mybluemix.net/?define=computers
 	apiProvider = flag.String("agent", "mw", "api provider")
     APIendpointURL string
 )
@@ -73,7 +74,7 @@ func printDef(defs []string) {
 	for n, def := range defs {
 		num := strconv.Itoa(n + 1)
 		color.Blue("Definition " + num + ": ")
-		color.Green(def + "\n\n") // https://stackoverflow.com/questions/14289256/cannot-convert-data-type-interface-to-type-string-need-type-assertion
+		color.Green(def + "\n\n")
 
 		say("Definition " + num)
 		time.Sleep(wordPause)
@@ -111,10 +112,17 @@ func main() {
 	}
 	defer resp.Body.Close()
 
+    // dump, err := httputil.DumpResponse(resp, true)
+    // if err != nil {
+    //     log.Fatal(err)
+    // }
+    // fmt.Printf("%q", dump)
+
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
 	}
+
 
 	var f interface{}
 	err = json.Unmarshal(bodyBytes, &f)
@@ -123,33 +131,38 @@ func main() {
 	}
 
     // In this way you can work with unknown JSON data while still enjoying the benefits of type safety.
-	a := f.([]interface{}) // https://tour.golang.org/methods/15
+	results := f.([]interface{}) // https://tour.golang.org/methods/15
 
 	switch *apiProvider {
-	case "mw": // merriam-webster api result format: https://dictionaryapi.com/products/api-collegiate-dictionary
-		for i, v := range a {
-			if i == 0 { // use first result
-				 m := v.(map[string]interface{}) // https://blog.golang.org/json-and-go
-				for k, v := range m {
-					switch vv := v.(type) { // interface type assertion, https://tour.golang.org/methods/15
-					case []interface{}: // an array type
+    case "mw": // merriam-webster api result format: https://dictionaryapi.com/products/api-collegiate-dictionary
+
+    for i, v := range results {            
+    	if i == 0 { // use first result
+            switch v.(type) {
+            case string:
+                // target word NOT found (eg. iphone)
+                color.Blue("Did you mean: ")
+                for _, v := range results {
+                    color.White(v.(string));
+                }
+            case map[string]interface{}:
+                // target word found (eg. computer)
+                m := v.(map[string]interface{}) // https://blog.golang.org/json-and-go
+                for k, v := range m {
+                    switch vv := v.(type) { // interface type assertion, https://tour.golang.org/methods/15
+                    case []interface{}: // an array type
                     defs := make([]string, len(vv))
-						if k == "shortdef" {
+                        if k == "shortdef" {
                             for defK, def := range vv {
-                                defs[defK] = def.(string)
+                                defs[defK] = def.(string) // https://stackoverflow.com/questions/14289256/cannot-convert-data-type-interface-to-type-string-need-type-assertion
                             }
-							printDef(defs)
-							break
-						}
-					}
-				}
-			}
-		}
+                            printDef(defs)
+                        }
+                    }
+                }
+             }
+    	}
+    }
 	}
 
-	// dump, err := httputil.DumpResponse(resp, true)
-	// if err != nil {
-	//     log.Fatal(err)
-	// }
-	// fmt.Printf("%q", dump)
 }
