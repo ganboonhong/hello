@@ -20,15 +20,15 @@ import (
 const (
 	hr             = "------\n\n"
 	mwEndPoint     = "https://dictionaryapi.com/api/v3/references/collegiate/json/"
-    googleEndPoint = "https://googledictionaryapi.eu-gb.mybluemix.net/?define="
+	googleEndPoint = "https://googledictionaryapi.eu-gb.mybluemix.net/?define="
 	// googleEndPoint = "https://mydictionaryapi.appspot.com/?define="
-	wordPause      = 700 * time.Millisecond
-	sentencePause  = 1 * time.Second
+	wordPause     = 700 * time.Millisecond
+	sentencePause = 1 * time.Second
 )
 
 var (
 	apiProvider    = flag.String("a", "google", "api provider") // https://medium.com/@martin.breuss/finding-a-useful-dictionary-api-52084a01503d
-    wSpeech = flag.Bool("s", false, "read out the definitions")
+	wSpeech        = flag.Bool("s", false, "read out the definitions")
 	APIendpointURL string
 )
 
@@ -41,7 +41,7 @@ type GDefinition []struct {
 // nested struct
 type GResponse []struct {
 	Word     string `json:word,omitempty`
-    Phonetic string `json:phonetic,omitempty`
+	Phonetic string `json:phonetic,omitempty`
 	Meaning  struct {
 		Noun   GDefinition `json:noun,omitempty`
 		Verb   GDefinition `json:verb,omitempty`
@@ -64,8 +64,8 @@ func say(s string) {
 func initHint(s string) {
 
 	fmt.Println(
-        fmt.Sprintf("\nSearching for %q ...", s),
-    )
+		fmt.Sprintf("\nSearching for %q ...", s),
+	)
 	say("Searching for")
 	time.Sleep(wordPause)
 	say(s)
@@ -79,15 +79,15 @@ func printDef(defs []string) {
 	} else {
 		totalDefTitle = "definitions"
 	}
+
 	resultTitle := fmt.Sprintf(
 		"%d %s %s\n \n",
 		len(defs),
 		totalDefTitle,
-        "found:",
+		"found:",
 	)
 
 	color.White(hr)
-
 	color.Blue(resultTitle)
 	say(resultTitle)
 	time.Sleep(wordPause)
@@ -105,9 +105,16 @@ func printDef(defs []string) {
 			time.Sleep(sentencePause)
 		}
 	}
-
 	color.White(hr)
+}
 
+func gSetDefs(a GDefinition, defs []string) []string {
+	for _, v := range a {
+		if v.Definition != "" {
+			defs = append(defs, v.Definition)
+		}
+	}
+	return defs
 }
 
 func main() {
@@ -189,18 +196,21 @@ func main() {
 
 		var gResponse GResponse
 		json.Unmarshal(bodyBytes, &gResponse)
-        var defs []string
-        for _, r := range gResponse {
-            if len(r.Meaning.Noun) > 0 {
-                for _, v := range r.Meaning.Noun {
-                    
-                    if v.Definition != "" {
-                        defs = append(defs, v.Definition)
-                    }
-                }
-            }
-        }
-        printDef(defs)
+		defs := make([]string, 0)
+		for _, r := range gResponse {
+			if len(r.Meaning.Noun) > 0 {
+				defs = gSetDefs(r.Meaning.Noun, defs)
+			}
+
+			if len(r.Meaning.Verb) > 0 {
+				defs = gSetDefs(r.Meaning.Verb, defs)
+			}
+
+			if len(r.Meaning.Adverb) > 0 {
+				defs = gSetDefs(r.Meaning.Adverb, defs)
+			}
+		}
+		printDef(defs)
 	}
 
 }
