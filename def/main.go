@@ -17,11 +17,13 @@ import (
 	"github.com/fatih/color"
 )
 
+// https://tutorialedge.net/golang/advanced-go-testing-tutorial/
+
 const (
 	hr             = "------\n\n"
-	mwEndPoint     = "https://dictionaryapi.com/api/v3/references/collegiate/json/"
-	googleEndPoint = "https://googledictionaryapi.eu-gb.mybluemix.net/?define="
-	// googleEndPoint = "https://mydictionaryapi.appspot.com/?define="
+	mwEndpoint     = "https://dictionaryapi.com/api/v3/references/collegiate/json/"
+	googleEndpoint = "https://googledictionaryapi.eu-gb.mybluemix.net/?define="
+	// googleEndpoint = "https://mydictionaryapi.appspot.com/?define="
 	wordPause     = 700 * time.Millisecond
 	sentencePause = 1 * time.Second
 )
@@ -129,9 +131,9 @@ func main() {
 
 	switch *apiProvider {
 	case "mw":
-		APIendpointURL = mwEndPoint + word + "?key=6dfc3570-8a8b-4e4d-8734-aface0fbc277"
+		APIendpointURL = mwEndpoint + word + "?key=6dfc3570-8a8b-4e4d-8734-aface0fbc277"
 	case "google":
-		APIendpointURL = googleEndPoint + word
+		APIendpointURL = googleEndpoint + word
 
 	}
 	resp, err := http.Get(APIendpointURL)
