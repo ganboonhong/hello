@@ -1,4 +1,4 @@
-package washer
+package reference
 
 import (
     "fmt"
