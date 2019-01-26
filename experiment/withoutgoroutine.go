@@ -4,19 +4,19 @@ import (
     "fmt"
 )
 
-func count0to1k(){
+func countAsc(){
     for i := 1; i <= 100; i++ {
         fmt.Println(i)
     }
 }
 
-func count1kto0(){
+func countDesc(){
     for i := 100; i >= 0; i-- {
         fmt.Println(i)
     }
 }
 
 func main(){
-    go count0to1k();
-    count1kto0();
+    countAsc();
+    countDesc();
 }
