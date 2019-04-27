@@ -29,8 +29,8 @@ const (
 )
 
 var (
-	apiProvider    = flag.String("a", "google", "api provider") // https://medium.com/@martin.breuss/finding-a-useful-dictionary-api-52084a01503d
-	wSpeech        = flag.Bool("s", false, "read out the definitions")
+	apiProvider    = flag.String("src", "google", "api provider") // https://medium.com/@martin.breuss/finding-a-useful-dictionary-api-52084a01503d
+	wSpeech        = flag.Bool("audio", true, "read out the definitions")
 	APIendpointURL string
 )
 
@@ -41,7 +41,7 @@ type GDefinition []struct {
 }
 
 // nested struct
-type GResponse []struct {
+type GResponse struct {
 	Word     string `json:word,omitempty`
 	Phonetic string `json:phonetic,omitempty`
 	Meaning  struct {
@@ -118,6 +118,11 @@ func gSetDefs(a GDefinition, defs []string) []string {
 	}
 	return defs
 }
+
+// usage
+// go run main.go -src=mw computer
+// ./def -src=mw computer
+// ./def -src=google -audio=false flower
 
 func main() {
 	flag.Parse()
@@ -198,20 +203,22 @@ func main() {
 
 		var gResponse GResponse
 		json.Unmarshal(bodyBytes, &gResponse)
+
 		defs := make([]string, 0)
-		for _, r := range gResponse {
-			if len(r.Meaning.Noun) > 0 {
-				defs = gSetDefs(r.Meaning.Noun, defs)
+
+
+			if len(gResponse.Meaning.Noun) > 0 {
+				defs = gSetDefs(gResponse.Meaning.Noun, defs)
 			}
 
-			if len(r.Meaning.Verb) > 0 {
-				defs = gSetDefs(r.Meaning.Verb, defs)
+			if len(gResponse.Meaning.Verb) > 0 {
+				defs = gSetDefs(gResponse.Meaning.Verb, defs)
 			}
 
-			if len(r.Meaning.Adverb) > 0 {
-				defs = gSetDefs(r.Meaning.Adverb, defs)
+			if len(gResponse.Meaning.Adverb) > 0 {
+				defs = gSetDefs(gResponse.Meaning.Adverb, defs)
 			}
-		}
+
 		printDef(defs)
 	}
 
